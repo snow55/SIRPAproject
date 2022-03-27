@@ -89,10 +89,11 @@ volcanoFUN_beautiful=function(dataset=NULL,title=NULL,
                               cut_off_logFC = 0.1,
                               label_logFC=0.8,
                               genes.to.label=NULL,
-                              p_val_min=1E-300,
+                              p_val_min=NULL,
                               w=5.3,h=4){
   library(ggrepel)
-
+  library(ggrastr)
+  
   dataset = dataset[dataset$p_val_adj!=1,]
   dataset$gene = rownames(dataset)
   
@@ -108,23 +109,29 @@ volcanoFUN_beautiful=function(dataset=NULL,title=NULL,
   }
   dataset = dataset[order(dataset$change,decreasing = T),]
   dataset$pointSize = ifelse(dataset$change==labelUp | dataset$change==labelDown,0.5,0.1)
-  dataset[which(dataset$p_val_adj < p_val_min),]$p_val_adj=p_val_min
+  if(!is.null(p_val_min)){
+      dataset[which(dataset$p_val_adj < p_val_min),]$p_val_adj=p_val_min
+  }else{
+    dataset$p_val_adj=dataset$p_val_adj
+  }
   
   pdf(paste0(sampleoutpath,sample,"Volcanoplot_",title,".pdf"),width = w,height = h)
   p = ggplot(dataset,aes(x = avg_logFC, 
                          y = -log10(p_val_adj),
                          fill=change,color=change)) +
-    geom_point(size=2,alpha=1,shape=16) +
+    # geom_point(size=2,alpha=1,shape=16) +
+    geom_point_rast(size=2,alpha=1,shape=16, raster.dpi = getOption("ggrastr.default.dpi", 300),)+ #图片瘦身1：点图不是是矢量，文字是
+    # scattermore::geom_scattermore(pixels = c(512, 512), pointsize = pt.size*50) #raster.dpi=c(512, 512) #图片瘦身2
     scale_color_manual(values=c("grey80","#a50f15","#4169e1"),
                        breaks=c(labelUp,labelDown),
-                       labels=c(labelUp,#expression("IFN"^"hi"*" T special")
+                       labels=c(labelUp,
                                 labelDown)
     )+ 
     scale_fill_manual(values=c("grey80","#a50f15","#4169e1")
     )+ 
     
-    geom_hline(yintercept = -log10(cut_off_pvalue),lty=4,col="grey",lwd=0.6) +
-    geom_vline(xintercept = c(0),lty="dashed",col="black",lwd=0.6) +
+    geom_hline(yintercept = -log10(cut_off_pvalue),lty=4,col="black",lwd=0.6) +
+    geom_vline(xintercept = c(0),lty=4,col="black",lwd=0.6) +
     labs(x=expression("Log"["2"]*"(Fold change)"),
          y=expression("-Log"["10"]*"(adjust P vaule)"),
          title = "")+ 
@@ -152,13 +159,13 @@ volcanoFUN_beautiful=function(dataset=NULL,title=NULL,
 }
 
 eg.
-volcanoFUN_beautiful(dataset = DFgenes_TAM,
+volcanoFUN_beautiful(dataset = DFgenes,
            title = "KO vs WT",
            sampleoutpath = sampleoutpath_DFgene,
            cut_off_logFC = 0.1,
-           label_logFC=0.5,
+           label_logFC=0.4,
            p_val_min=1E-100,
-           sample = "TAM",
+           sample = ct,
            labelUp="KO high",
            labelDown = "WT high",
            w=5.3,h=6)
