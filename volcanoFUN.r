@@ -1,3 +1,4 @@
+## basic volcanoplot
 volcanoFUN = function(dataset=NULL,title=NULL,
                       sampleoutpath=NULL,sample=NULL,
                       labelUp=NULL,labelDown=NULL,
@@ -80,7 +81,7 @@ volcanoFUN(dataset = DFgenes_TAM[!DFgenes_TAM$p_val_adj==1,],
            labelUp="KO high",
            labelDown = "WT high")
            
-## volcanoFUN_beautiful
+## beautiful volcanoplot
 volcanoFUN_beautiful=function(dataset=NULL,title=NULL,
                               sampleoutpath=NULL,sample=NULL,
                               labelUp=NULL,labelDown=NULL,
