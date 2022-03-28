@@ -88,6 +88,7 @@ volcanoFUN_beautiful=function(dataset=NULL,title=NULL,
                               cut_off_pvalue = 0.05,
                               cut_off_logFC = 0.1,
                               label_logFC=0.8,
+                              label_pvalue=NULL,
                               genes.to.label=NULL,
                               p_val_min=NULL,
                               w=5.3,h=4){
@@ -100,17 +101,25 @@ volcanoFUN_beautiful=function(dataset=NULL,title=NULL,
   dataset$change = ifelse(dataset$p_val_adj < cut_off_pvalue & abs(dataset$avg_logFC) >= 0, 
                           ifelse(dataset$avg_logFC> 0 ,labelUp,labelDown),"") 
   # dataset$change = factor(dataset$change,levels = c("",labelUp,labelDown))
-  if(!is.null(genes.to.label)){
+  if(!is.null(genes.to.label) & is.null(label_pvalue)){
     dataset$label = ifelse(dataset$gene %in% genes.to.label | 
-                           (dataset$p_val_adj < cut_off_pvalue & abs(dataset$avg_logFC)>label_logFC), 
+                             (dataset$p_val_adj < cut_off_pvalue & abs(dataset$avg_logFC)>label_logFC), 
                            dataset$gene,"")
-  } else{
+  } else if(is.null(genes.to.label) & !is.null(label_pvalue)){
+    dataset$label = ifelse( dataset$p_val_adj < cut_off_pvalue & abs(dataset$avg_logFC)>label_logFC |
+                              dataset$p_val_adj<label_pvalue, dataset$gene,"")
+  }else if(!is.null(genes.to.label) & !is.null(label_pvalue)){
+    dataset$label = ifelse(dataset$gene %in% genes.to.label | 
+                             (dataset$p_val_adj < cut_off_pvalue & abs(dataset$avg_logFC)>label_logFC) |
+                             dataset$p_val_adj<label_pvalue, 
+                           dataset$gene,"")
+  }else {
     dataset$label = ifelse( dataset$p_val_adj < cut_off_pvalue & abs(dataset$avg_logFC)>label_logFC, dataset$gene,"")
   }
   dataset = dataset[order(dataset$change,decreasing = T),]
   dataset$pointSize = ifelse(dataset$change==labelUp | dataset$change==labelDown,0.5,0.1)
   if(!is.null(p_val_min)){
-      dataset[which(dataset$p_val_adj < p_val_min),]$p_val_adj=p_val_min
+    dataset[which(dataset$p_val_adj < p_val_min),]$p_val_adj=p_val_min
   }else{
     dataset$p_val_adj=dataset$p_val_adj
   }
@@ -164,6 +173,7 @@ volcanoFUN_beautiful(dataset = DFgenes,
            sampleoutpath = sampleoutpath_DFgene,
            cut_off_logFC = 0.1,
            label_logFC=0.4,
+           label_pvalue=NULL,
            p_val_min=1E-100,
            sample = ct,
            labelUp="KO high",
